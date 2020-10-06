@@ -47,7 +47,7 @@ async function loadLedgerState(magicString) {
 
 async function calculateLeaderLogs() {
 
-  const magicString           = genesisShelley.networkId === 'testnet' ?
+  const magicString           = genesisShelley.networkId === 'Testnet' ?
     '--testnet-magic ' + genesisShelley.networkMagic :
     '--mainnet'
 
