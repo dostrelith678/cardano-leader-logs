@@ -68,7 +68,7 @@ async function calculateLeaderLogs() {
 
     } catch(e) {
 
-      console.log('Could not load ledger state from config. Trying to generate new lederstate.json')
+      console.log('Could not load ledger state from config. Trying to generate new ledgerstate.json')
 
       ledger = await loadLedgerState(magicString)
     }
