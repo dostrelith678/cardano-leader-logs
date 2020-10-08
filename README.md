@@ -49,8 +49,6 @@ The path to the cardano-cli could be a cardano-cli or ./cardano-cli depending on
 
 ```javscript
 {
-  "epochNonce":       "5ee77854fe91cc243b8d5589de3192e795f162097dba7501f8d1b0d5d7546bd5",
-
   "poolId":           "00000000000000000000000000000000000000000000000000000000",
   "vrfSkey":          "/path/to/vrf.skey",
 
@@ -93,8 +91,16 @@ Switch to the project directory, so the ledger state is generated in this direct
 This may take a while. Dumping the ledger state and going through 432000 slots takes time.
 
 ```bash
-node cardanoLeaderLogs.js path/to/slotLeaderLogsConfig.json
+node cardanoLeaderLogs.js path/to/slotLeaderLogsConfig.json epochNoneHash [optional: 1]
 ```
+
+Adam put up a service to retrieve the current and past epoch nonces. Those are also in epoch-nonce.txt
+
+eg.:
+https://epoch-api.crypto2099.io:2096/epoch/222
+
+By using last epochs nonce and adding 1 at the end of the node call, you can replay the last epoch
+to verify last epochs block assignments.
 
 ## thanks
 

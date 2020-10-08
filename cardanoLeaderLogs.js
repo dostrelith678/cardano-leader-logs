@@ -8,15 +8,16 @@ const { execShellCommand }    = require('./cliUtils.js')
 
 const { getSigma }            = require('./ledgerUtils.js')
 
-if(process.argv.length < 3) {
+console.log('process args:', process.argv)
 
-  throw Error('Missing path to leaderLogsConfig.json')
+if(process.argv.length < 4) {
+
+  throw Error('Usage: node cardanoLeaderLogs.js path/to/leaderlogs.config epochNonce')
 }
 
 const params                  = JSON.parse(fs.readFileSync(process.argv[2]))
 
 if(
-  !params.hasOwnProperty('epochNonce') ||
   !params.hasOwnProperty('poolId') ||
   !params.hasOwnProperty('vrfSkey') ||
   !params.hasOwnProperty('genesisShelley') ||
@@ -32,7 +33,10 @@ if(
 
 const cardanoCLI              = params.cardanoCLI
 
-const epochNonce              = params.epochNonce
+const epochNonce              = process.argv[3]
+const lastEpoch               = process.argv.length >= 5 && process.argv[4] === '1'
+
+console.log('replay last epoch', lastEpoch)
 
 const poolId                  = params.poolId
 const vrfSkey                 = JSON.parse(fs.readFileSync(params.vrfSkey)).cborHex
@@ -79,21 +83,25 @@ async function calculateLeaderLogs() {
   const protocolParameters    = await callCLIForJSON(cardanoCLI + ' shelley query protocol-parameters --cardano-mode ' + magicString)
   const tip                   = await callCLIForJSON(cardanoCLI + ' shelley query tip ' + magicString)
 
-  const firstSlotOfEpoch      = await getFirstSlotOfEpoch(genesisByron, genesisShelley, tip.slotNo)
-  const sigma                 = await getSigma(poolId, ledger)
+  const firstSlotOfEpoch      = await getFirstSlotOfEpoch(genesisByron, genesisShelley,
+    tip.slotNo - (lastEpoch ? genesisShelley.epochLength : 0))
+  const sigma                 = await getSigma(poolId, ledger, lastEpoch)
   const poolVrfSkey           = vrfSkey.substr(4)
+
+  console.log('firstSlotOfEpoch', firstSlotOfEpoch)
+  console.log('sigma', sigma)
 
   execShellCommand('python3 ./isSlotLeader.py' +
     ' --first-slot-of-epoch ' + firstSlotOfEpoch +
     ' --epoch-nonce '         + epochNonce +
     ' --vrf-skey '            + poolVrfSkey +
     ' --sigma '               + sigma +
-    ' --d '                   + protocolParameters.decentralisationParam +
+    ' --d '                   + (parseFloat(protocolParameters.decentralisationParam) + (lastEpoch ? 0.02 : 0)) +
     ' --epoch-length '        + genesisShelley.epochLength +
     ' --active-slots-coeff '  + genesisShelley.activeSlotsCoeff +
     ' --libsodium-binary '    + params.libsodiumBinary
   )
-  .then(out => { console.log(out) })
+    .then(out => { console.log(out) })
 }
 
 

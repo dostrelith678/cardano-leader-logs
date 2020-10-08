@@ -2,10 +2,10 @@
  * Calculate the amount of controlled stake (stake proportion) by a given pool from the ledger
  * e.g. 0.0034 == 0.34% of the total stake
  */
-async function getSigma(poolId, ledger) {
+async function getSigma(poolId, ledger, lastEpoch) {
 
-  const stake           = ledger.esSnapshots._pstakeSet._stake
-  const delegations     = ledger.esSnapshots._pstakeSet._delegations
+  const stake           = lastEpoch ? ledger.esSnapshots._pstakeGo._stake       : ledger.esSnapshots._pstakeSet._stake
+  const delegations     = lastEpoch ? ledger.esSnapshots._pstakeGo._delegations : ledger.esSnapshots._pstakeSet._delegations
 
   const stakeMap        = {}
   const delegationsMap  = {}
@@ -27,6 +27,9 @@ async function getSigma(poolId, ledger) {
       activeStake += stakeMap[delegationsItem[0]['key hash']]
     }
   }
+
+  console.log('active stake:', activeStake)
+  console.log('total stake: ', totalStake)
 
   return activeStake / totalStake
 }

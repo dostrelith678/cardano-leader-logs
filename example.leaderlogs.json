@@ -1,6 +1,4 @@
 {
-  "epochNonce":       "171625aef5357dfccfeaeedecd5de49f71fb6e05953f2799d3ff84419dbef0ac",
-
   "poolId":           "00000000000000000000000000000000000000000000000000000000",
   "vrfSkey":          "/path/to/vrf.skey",
 
