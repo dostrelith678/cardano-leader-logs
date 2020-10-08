@@ -102,4 +102,5 @@ for slot in range(firstSlotOfEpoch,epochLength+firstSlotOfEpoch):
         timestamp = datetime.fromtimestamp(slot + 1591566291, tz=local_tz)
         print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Leader for slot " +str(slot-firstSlotOfEpoch) + ", Cumulative epoch blocks: " + str(slotcount))
 
-
+if slotcount == 0:
+    print("The designated pool doesn't have any blocks for this epoch, good luck in the next epoch !!")
