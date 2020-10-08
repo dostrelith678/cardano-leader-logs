@@ -11,7 +11,7 @@ This is a nodejs + python implementation which was tested on Ubuntu 20.04.
 
 ```bash
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -  
-sudo apt update
+sudo apt-get update
 sudo apt-get install -y nodejs
 
 export NODE_PATH=/usr/lib/node_modules/
@@ -20,12 +20,12 @@ export NODE_PATH=/usr/lib/node_modules/
 ### python3
 
 ```bash
-sudo apt update
-sudo apt install -y software-properties-common
+sudo apt-get update
+sudo apt-get install -y software-properties-common
 sudo add-apt-repository ppa:deadsnakes/ppa
-sudo apt update
-sudo apt install -y python3.9
-sudo apt install -y python3-pip
+sudo apt-get update
+sudo apt-get install -y python3.9
+sudo apt-get install -y python3-pip
 
 python3 ––version
 pip3 --version
@@ -76,7 +76,7 @@ There soon might be easier ways to retrieve eta0 (epoch nonce), but until then:
 line 45: add
 import Debug.Trace
 
-line 425: replace with
+line 424: replace with
       y'         = SL.mkSeed SL.seedL   slot (trace("{\"epochNonce\": " ++ show eta0 ++ "}") $ eta0)
 ```
 

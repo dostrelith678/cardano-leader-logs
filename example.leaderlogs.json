@@ -1,5 +1,5 @@
 {
-  "epochNonce":       "5ee77854fe91cc243b8d5589de3192e795f162097dba7501f8d1b0d5d7546bd5",
+  "epochNonce":       "171625aef5357dfccfeaeedecd5de49f71fb6e05953f2799d3ff84419dbef0ac",
 
   "poolId":           "00000000000000000000000000000000000000000000000000000000",
   "vrfSkey":          "/path/to/vrf.skey",
