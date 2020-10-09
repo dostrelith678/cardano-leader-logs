@@ -27,7 +27,7 @@ sudo apt-get update
 sudo apt-get install -y python3.9
 sudo apt-get install -y python3-pip
 
-python3 ––version
+python3 --version
 pip3 --version
 
 pip3 install pytz
