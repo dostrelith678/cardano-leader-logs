@@ -28,8 +28,8 @@ async function getSigma(poolId, ledger, lastEpoch) {
     }
   }
 
-  console.log('active stake:', activeStake)
-  console.log('total stake: ', totalStake)
+  console.log('             active stake:', activeStake)
+  console.log('              total stake:', totalStake)
 
   return activeStake / totalStake
 }

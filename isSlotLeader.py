@@ -91,6 +91,7 @@ def isSlotLeader(slot, activeSlotsCoeff, sigma, eta0, poolVrfSkey):
     sigmaOfF = math.exp(-sigma * c)
     return q <= sigmaOfF
 
+print("[")
 for slot in range(firstSlotOfEpoch,epochLength+firstSlotOfEpoch):
     if isOverlaySlot(firstSlotOfEpoch,slot,decentralizationParam):
         continue
@@ -98,9 +99,14 @@ for slot in range(firstSlotOfEpoch,epochLength+firstSlotOfEpoch):
     slotLeader = isSlotLeader(slot,activeSlotsCoeff,sigma,eta0,poolVrfSkey)
 
     if slotLeader:
+        if slotcount > 0:
+            print("    ,")
         slotcount+=1
         timestamp = datetime.fromtimestamp(slot + 1591566291, tz=local_tz)
-        print(timestamp.strftime('%Y-%m-%d %H:%M:%S') + " ==> Leader for slot " +str(slot-firstSlotOfEpoch) + ", Cumulative epoch blocks: " + str(slotcount))
+        print("    {")
+        print("      \"index\":      " + str(slotcount) + ",")
+        print("      \"slot\":       " + str(slot-firstSlotOfEpoch) + ",")
+        print("      \"date\":       \"" + timestamp.strftime('%Y-%m-%d %H:%M:%S') + "\"")
+        print("    }")
 
-if slotcount == 0:
-    print("No slots assigned. Better luck next epoch!")
+print("]")
