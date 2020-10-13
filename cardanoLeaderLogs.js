@@ -32,7 +32,8 @@ if(
   !params.hasOwnProperty('ledgerState') ||
   !params.hasOwnProperty('libsodiumBinary') ||
   !params.hasOwnProperty('nodeStatsURL') ||
-  !params.hasOwnProperty('cardanoCLI')
+  !params.hasOwnProperty('cardanoCLI') ||
+  !params.hasOwnProperty('timeZone')
 ) {
 
   throw Error('Invalid leaderLogsConfig.json')
@@ -46,6 +47,7 @@ const lastEpoch               = process.argv.length >= 5 && process.argv[4] === 
 console.log('     replaying last epoch:', lastEpoch)
 
 const poolId                  = params.poolId
+const timeZone                = params.timeZone
 const vrfSkey                 = JSON.parse(fs.readFileSync(params.vrfSkey)).cborHex
 const genesisShelley          = JSON.parse(fs.readFileSync(params.genesisShelley))
 const genesisByron            = JSON.parse(fs.readFileSync(params.genesisByron))
@@ -56,8 +58,8 @@ async function loadLedgerState(magicString) {
   return JSON.parse(fs.readFileSync(process.cwd()+'/ledgerstate.json'))
 }
 
-async function getLeaderLogs(firstSlotOfEpoch, poolVrfSkey, sigma, d) {
-
+async function getLeaderLogs(firstSlotOfEpoch, poolVrfSkey, sigma, d, timeZone) {
+  
   let out = await execShellCommand('python3 ./isSlotLeader.py' +
     ' --first-slot-of-epoch ' + firstSlotOfEpoch +
     ' --epoch-nonce '         + epochNonce +
@@ -66,7 +68,8 @@ async function getLeaderLogs(firstSlotOfEpoch, poolVrfSkey, sigma, d) {
     ' --d '                   + d +
     ' --epoch-length '        + genesisShelley.epochLength +
     ' --active-slots-coeff '  + genesisShelley.activeSlotsCoeff +
-    ' --libsodium-binary '    + params.libsodiumBinary
+    ' --libsodium-binary '    + params.libsodiumBinary +
+    ' --time-zone '           + timeZone
   )
 
   let slots = JSON.parse(out)
@@ -123,7 +126,7 @@ async function calculateLeaderLogs() {
   console.log('         firstSlotOfEpoch:', firstSlotOfEpoch)
   console.log('                    sigma:', sigma)
 
-  await getLeaderLogs(firstSlotOfEpoch, poolVrfSkey, sigma, d)
+  await getLeaderLogs(firstSlotOfEpoch, poolVrfSkey, sigma, d, timeZone)
 
   if(overwriteDFactor >= 0.0) {
 
