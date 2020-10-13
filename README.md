@@ -93,7 +93,7 @@ Switch to the project directory, so the ledger state is generated in this direct
 This may take a while. Dumping the ledger state and going through 432000 slots takes time.
 
 ```bash
-node cardanoLeaderLogs.js path/to/slotLeaderLogsConfig.json epochNoneHash [optional: 1]
+node cardanoLeaderLogs.js path/to/slotLeaderLogsConfig.json epochNonceHash [optional: 1] [optional: additionalDParameter, eg. 0.0]
 ```
 
 Adam put up a service to retrieve the current and past epoch nonces. Those are also in epoch-nonce.txt
