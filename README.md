@@ -59,7 +59,9 @@ The path to the cardano-cli could be a cardano-cli or ./cardano-cli depending on
 
   "libsodiumBinary":  "/usr/local/lib/libsodium.so",
   "cardanoCLI":       "cardano-cli",
-  "nodeStatsURL":     "http://127.0.0.1:12798/metrics"
+  "nodeStatsURL":     "http://127.0.0.1:12798/metrics",
+  
+  "timeZone":         "Europe/Berlin"
 }
 ```
 
