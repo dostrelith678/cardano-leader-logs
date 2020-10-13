@@ -18,6 +18,7 @@ parser.add_argument('--sigma',              type=float, dest='sigma',       help
 parser.add_argument('--d',                  type=float, dest='d',           help='the decentralizationParam param d', required=True)
 parser.add_argument('--active-slots-coeff', type=float, dest='activeSlotsCoeff', help='the activeSlotsCoeff [e.g. 0.05]', required=True)
 parser.add_argument('--libsodium-binary',               dest='libsodiumBin',help='the path to libsodium', required=True)
+parser.add_argument('--time-zone',          type=str,   dest='timezone',    help='the timezone of the user', required=True)
 
 args = parser.parse_args()
 
@@ -28,9 +29,10 @@ sigma                 = args.sigma
 eta0                  = args.eta0
 poolVrfSkey           = args.skey
 decentralizationParam = args.d
+timezone              = 'Europe/Berlin' if not args.timezone else args.timezone
 
 slotcount             = 0
-local_tz              = pytz.timezone('Europe/Berlin') # use your local timezone name here
+local_tz              = pytz.timezone(timezone)
 
 # Bindings are not avaliable so using ctypes to just force it in for now.
 libsodium = cdll.LoadLibrary(args.libsodiumBin)
