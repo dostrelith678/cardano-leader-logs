@@ -3,6 +3,8 @@ In a community effort, led by Andrew Westberg [BCSH], we implemented a way to re
 
 This is a nodejs + python implementation which was tested on Ubuntu 20.04.
 
+Japanese README: https://github.com/btbf/cardano-leader-logs
+
 # installation
 
 ## Ubuntu 20.04
