@@ -35,6 +35,18 @@ pip3 --version
 pip3 install pytz
 ```
 
+### Libsodium
+
+```
+git clone https://github.com/input-output-hk/libsodium
+cd libsodium
+git checkout 66f017f1
+./autogen.sh
+./configure
+make
+sudo make install
+```
+
 ### cardano-node
 
 The node does not need to run as a block producer.
