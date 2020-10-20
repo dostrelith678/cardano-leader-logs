@@ -29,11 +29,15 @@ sigma                 = args.sigma
 eta0                  = args.eta0
 poolVrfSkey           = args.skey
 decentralizationParam = args.d
-timezone              = 'Europe/Berlin' if not args.timezone else args.timezone
+timezone              = 'Europe/Berlin' if args.timezone not in pytz.all_timezones else args.timezone
 
 slotcount             = 0
-local_tz              = pytz.timezone(timezone)
-
+try:
+    local_tz = pytz.timezone(timezone)
+except pytz.exceptions.UnknownTimeZoneError as error:
+    print("Wrong or unknown timeZone, reverting back to default timeZone ==> 'Europe/Berlin'")
+    local_tz = pytz.timezone('Europe/Berlin')
+    
 # Bindings are not avaliable so using ctypes to just force it in for now.
 libsodium = cdll.LoadLibrary(args.libsodiumBin)
 libsodium.sodium_init()
