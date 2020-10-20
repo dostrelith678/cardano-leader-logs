@@ -6,6 +6,10 @@ import hashlib
 import pytz
 import argparse
 
+from decimal import *
+getcontext().prec = 9
+getcontext().rounding = ROUND_HALF_UP
+
 from datetime import datetime, timezone
 from ctypes import *
 
@@ -73,10 +77,12 @@ def vrfEvalCertified(seed, tpraosCanBeLeaderSignKeyVRF):
         exit()
 
 def isOverlaySlot(firstSlotOfEpoch, currentSlot, decentralizationParam):
-   diff_slot = float(currentSlot - firstSlotOfEpoch)
-   if math.ceil( diff_slot * decentralizationParam ) < math.ceil( (diff_slot + 1) * decentralizationParam ):
-      return True
-   return False
+    diff_slot = float(currentSlot - firstSlotOfEpoch)
+    left = Decimal(diff_slot) * Decimal(decentralizationParam)
+    right = Decimal(diff_slot + 1) * Decimal(decentralizationParam)
+    if math.ceil( left ) < math.ceil( right ):
+        return True
+    return False
 
 # Determine if our pool is a slot leader for this given slot
 # @param slot The slot to check
