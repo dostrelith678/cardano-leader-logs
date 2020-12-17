@@ -54,7 +54,7 @@ const genesisByron            = JSON.parse(fs.readFileSync(params.genesisByron))
 
 async function loadLedgerState(magicString) {
 
-  await execShellCommand(cardanoCLI + ' shelley query ledger-state --cardano-mode ' + magicString + ' > ' + process.cwd() + '/ledgerstate.json ')
+  await execShellCommand(cardanoCLI + ' query ledger-state --allegra-era ' + magicString + ' > ' + process.cwd() + '/ledgerstate.json ')
   return JSON.parse(fs.readFileSync(process.cwd()+'/ledgerstate.json'))
 }
 
@@ -113,8 +113,8 @@ async function calculateLeaderLogs() {
 
   console.log('                  Loading: protocol parameters')
 
-  const protocolParameters    = await callCLIForJSON(cardanoCLI + ' shelley query protocol-parameters --cardano-mode ' + magicString)
-  const tip                   = await callCLIForJSON(cardanoCLI + ' shelley query tip ' + magicString)
+  const protocolParameters    = await callCLIForJSON(cardanoCLI + ' query protocol-parameters --allegra-era ' + magicString)
+  const tip                   = await callCLIForJSON(cardanoCLI + ' query tip ' + magicString)
 
   const firstSlotOfEpoch      = await getFirstSlotOfEpoch(genesisByron, genesisShelley,
     tip.slotNo - (lastEpoch ? genesisShelley.epochLength : 0))

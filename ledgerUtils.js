@@ -4,8 +4,8 @@
  */
 async function getSigma(poolId, ledger, lastEpoch) {
 
-  const stake           = lastEpoch ? ledger.esSnapshots._pstakeGo._stake       : ledger.esSnapshots._pstakeSet._stake
-  const delegations     = lastEpoch ? ledger.esSnapshots._pstakeGo._delegations : ledger.esSnapshots._pstakeSet._delegations
+  const stake           = lastEpoch ? ledger.nesEs.esSnapshots._pstakeGo._stake       : ledger.nesEs.esSnapshots._pstakeSet._stake
+  const delegations     = lastEpoch ? ledger.nesEs.esSnapshots._pstakeGo._delegations : ledger.nesEs.esSnapshots._pstakeSet._delegations
 
   const stakeMap        = {}
   const delegationsMap  = {}
