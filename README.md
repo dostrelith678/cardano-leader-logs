@@ -15,6 +15,7 @@ Japanese README: https://github.com/btbf/cardano-leader-logs
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -  
 sudo apt-get update
 sudo apt-get install -y nodejs
+npm i stream-json
 
 export NODE_PATH=/usr/lib/node_modules/
 ```
