@@ -113,7 +113,7 @@ node cardanoLeaderLogs.js path/to/slotLeaderLogsConfig.json epochNonceHash [opti
 Adam put up a service to retrieve the current and past epoch nonces. Those are also in epoch-nonce.txt
 
 eg.:
-https://epoch-api.crypto2099.io:2096/epoch/222
+https://epoch-api.crypto2099.io:2096/epoch/236
 
 By using last epochs nonce and adding 1 at the end of the node call, you can replay the last epoch
 to verify last epochs block assignments.
@@ -122,5 +122,5 @@ to verify last epochs block assignments.
 
 Thanks to Andrew Westberg [BCSH], Papacarp [LOVE] and others who contributed.
 
-This repository is brought to you by Marcel Baumberg [TITAN]
+This repository was created by Marcel Baumberg [TITAN], now maintained by Damjan Ostrelic [EDEN].
 
