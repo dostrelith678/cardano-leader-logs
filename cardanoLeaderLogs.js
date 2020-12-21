@@ -1,5 +1,8 @@
 const fs                      = require('fs')
 
+const StreamObject = require('stream-json/streamers/StreamObject');
+const path = require('path');
+
 const { updateNodeStats }     = require('./nodeUtils.js')
 const { getFirstSlotOfEpoch } = require('./nodeUtils.js')
 
@@ -52,12 +55,32 @@ const vrfSkey                 = JSON.parse(fs.readFileSync(params.vrfSkey)).cbor
 const genesisShelley          = JSON.parse(fs.readFileSync(params.genesisShelley))
 const genesisByron            = JSON.parse(fs.readFileSync(params.genesisByron))
 
+async function loadLedgerJson(filename) {
+
+  return new Promise(function(resolve,reject){
+    const jsonStream = StreamObject.withParser();
+    let ledger = {}
+    jsonStream.on('data', ({key, value}) => {
+      ledger[key] = value;
+    });
+
+    jsonStream.on('end', () => {
+      console.log('Ledger loaded.');
+    });
+
+    fs.createReadStream(filename).pipe(jsonStream.input).on('end', () => {
+       resolve(ledger);
+    });
+  });
+}
 async function loadLedgerState(magicString) {
 
   await execShellCommand(cardanoCLI + ' query ledger-state --allegra-era ' + magicString + ' > ' + process.cwd() + '/ledgerstate.json ')
-  return JSON.parse(fs.readFileSync(process.cwd()+'/ledgerstate.json'))
-}
+  ledger = await loadLedgerJson(process.cwd()+'/ledgerstate.json');
 
+  return ledger
+
+}
 async function getLeaderLogs(firstSlotOfEpoch, poolVrfSkey, sigma, d, timeZone) {
   
   let out = await execShellCommand('python3 ./isSlotLeader.py' +
@@ -101,10 +124,11 @@ async function calculateLeaderLogs() {
 
     try {
 
-      ledger                  = JSON.parse(fs.readFileSync(params.ledgerState))
+      ledger = await loadLedgerJson(process.cwd()+'/ledgerstate.json');
+
 
     } catch(e) {
-
+      console.log(e)
       console.log('Could not load ledger state from config. Trying to generate new ledgerstate.json')
 
       ledger = await loadLedgerState(magicString)
