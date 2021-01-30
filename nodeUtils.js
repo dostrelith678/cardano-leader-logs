@@ -4,17 +4,17 @@ const nodeStats = {}
 
 function getEpoch() {
 
-  return nodeStats.cardano_node_ChainDB_metrics_epoch_int
+  return nodeStats.cardano_node_metrics_epoch_int
 }
 
 function getSlot() {
 
-  return nodeStats.cardano_node_ChainDB_metrics_slotNum_int
+  return nodeStats.cardano_node_metrics_slotNum_int
 }
 
 function getSlotInEpoch() {
 
-  return nodeStats.cardano_node_ChainDB_metrics_slotInEpoch_int
+  return nodeStats.cardano_node_metrics_slotInEpoch_int
 }
 
 function getShelleyTransitionEpoch(byron, shelley) {
