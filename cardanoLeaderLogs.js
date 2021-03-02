@@ -75,7 +75,7 @@ async function loadLedgerJson(filename) {
 }
 async function loadLedgerState(magicString) {
 
-  await execShellCommand(cardanoCLI + ' query ledger-state --allegra-era ' + magicString + ' > ' + process.cwd() + '/ledgerstate.json ')
+  await execShellCommand(cardanoCLI + ' query ledger-state --mary-era ' + magicString + ' > ' + process.cwd() + '/ledgerstate.json ')
   ledger = await loadLedgerJson(process.cwd()+'/ledgerstate.json');
 
   return ledger
