@@ -137,7 +137,7 @@ async function calculateLeaderLogs() {
 
   console.log('                  Loading: protocol parameters')
 
-  const protocolParameters    = await callCLIForJSON(cardanoCLI + ' query protocol-parameters --allegra-era ' + magicString)
+  const protocolParameters    = await callCLIForJSON(cardanoCLI + ' query protocol-parameters --mary-era ' + magicString)
   const tip                   = await callCLIForJSON(cardanoCLI + ' query tip ' + magicString)
 
   const firstSlotOfEpoch      = await getFirstSlotOfEpoch(genesisByron, genesisShelley,
