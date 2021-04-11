@@ -75,7 +75,7 @@ async function loadLedgerJson(filename) {
 }
 async function loadLedgerState(magicString) {
 
-  await execShellCommand(cardanoCLI + ' query ledger-state --mary-era ' + magicString + ' > ' + process.cwd() + '/ledgerstate.json ')
+  await execShellCommand(cardanoCLI + ' query ledger-state ' + magicString + ' > ' + process.cwd() + '/ledgerstate.json ')
   ledger = await loadLedgerJson(process.cwd()+'/ledgerstate.json');
 
   return ledger
@@ -137,7 +137,7 @@ async function calculateLeaderLogs() {
 
   console.log('                  Loading: protocol parameters')
 
-  const protocolParameters    = await callCLIForJSON(cardanoCLI + ' query protocol-parameters --mary-era ' + magicString)
+  const protocolParameters    = await callCLIForJSON(cardanoCLI + ' query protocol-parameters ' + magicString)
   const tip                   = await callCLIForJSON(cardanoCLI + ' query tip ' + magicString)
 
   const firstSlotOfEpoch      = await getFirstSlotOfEpoch(genesisByron, genesisShelley,
