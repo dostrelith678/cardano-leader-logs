@@ -82,25 +82,12 @@ The path to the cardano-cli could be a cardano-cli or ./cardano-cli depending on
 
 ## retrieving the epoch nonce
 
-There soon might be easier ways to retrieve eta0 (epoch nonce), but until then:
+```
+cardano-cli query protocol-state --mainnet | jq -r .csTickn.ticknStateEpochNonce.contents
 
-+ build cardano node fully one time.
-+ edit dist-newstyle/src/ouroboros_-e7dffa0d85e2839/ouroboros-consensus-shelley/src/Ouroboros/Consensus/Shelley/Protocol.hs
-
-```haskell
-line 45: add
-import Debug.Trace
-
-line 424: replace with
-      y'         = SL.mkSeed SL.seedL   slot (trace("{\"epochNonce\": " ++ show eta0 ++ "}") $ eta0)
+0022cfa563a5328c4fb5c8017121329e964c26ade5d167b1bd9b2ec967772b60
 ```
 
-Start this version on a core node. A relay will never call this code.  
-A dummy core node that is sync'd and running with keys should work, too.
-
-```
-$ journalctl -u yournode.service -f
-```
 
 ## run
 
