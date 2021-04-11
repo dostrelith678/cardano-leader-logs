@@ -1,5 +1,5 @@
 {
-  "poolId":           "d5b90a198d2411b5c82fbdfee5f94b86de49a8589bfa7720b9de358f",
+  "poolId":           "<YOUR_POOL_ID>",
   "vrfSkey":          "vrf.skey",
 
   "genesisShelley":   "../../files/mainnet-shelley-genesis.json",
