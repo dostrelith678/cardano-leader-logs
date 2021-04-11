@@ -141,11 +141,11 @@ async function calculateLeaderLogs() {
   const tip                   = await callCLIForJSON(cardanoCLI + ' query tip ' + magicString)
 
   const firstSlotOfEpoch      = await getFirstSlotOfEpoch(genesisByron, genesisShelley,
-    tip.slotNo - (lastEpoch ? genesisShelley.epochLength : 0))
+    tip.slot - (lastEpoch ? genesisShelley.epochLength : 0))
   const sigma                 = await getSigma(poolId, ledger, lastEpoch)
   const poolVrfSkey           = vrfSkey.substr(4)
 
-  let d = (parseFloat(protocolParameters.decentralisationParam) + (lastEpoch ? 0.02 : 0))
+  let d = (parseFloat(protocolParameters.decentralization) + (lastEpoch ? 0.02 : 0))
 
   console.log('         firstSlotOfEpoch:', firstSlotOfEpoch)
   console.log('                    sigma:', sigma)
