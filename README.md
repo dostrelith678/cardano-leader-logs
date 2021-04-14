@@ -18,6 +18,9 @@ sudo apt-get install -y nodejs
 npm i stream-json
 
 export NODE_PATH=/usr/lib/node_modules/
+
+// Need to override the default heap memory limit for NodeJS
+export NODE_OPTIONS="--max-old-space-size=8192"
 ```
 
 ### python3
@@ -50,7 +53,9 @@ sudo make install
 
 ### cardano-node
 
-The node does not need to run as a block producer.
+The node does not need to run as a block producer as long as it has access to the correct `vrf.skey`.
+
+
 
 
 ## slotLeaderLogsConfig.json
