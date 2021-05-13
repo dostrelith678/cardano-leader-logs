@@ -1,13 +1,13 @@
 {
-  "poolId":           "<YOUR_POOL_ID>",
+  "poolId":           "d5b90a198d2411b5c82fbdfee5f94b86de49a8589bfa7720b9de358f",
   "vrfSkey":          "vrf.skey",
 
-  "genesisShelley":   "../../files/mainnet-shelley-genesis.json",
-  "genesisByron":     "../../files/mainnet-byron-genesis.json",
-
-  "ledgerState":      "ledgerstate.json",
+  "genesisShelley":   "../files/genesis.json",
+  "genesisByron":     "../files/byron-genesis.json",
 
   "libsodiumBinary":  "/usr/local/lib/libsodium.so",
   "cardanoCLI":       "cardano-cli",
-  "nodeStatsURL":     "http://127.0.0.1:12798/metrics"
+  "nodeStatsURL":     "http://127.0.0.1:12798/metrics",
+
+  "timeZone":         "Europe/London"
 }

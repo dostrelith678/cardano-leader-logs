@@ -32,7 +32,6 @@ if(
   !params.hasOwnProperty('vrfSkey') ||
   !params.hasOwnProperty('genesisShelley') ||
   !params.hasOwnProperty('genesisByron') ||
-  !params.hasOwnProperty('ledgerState') ||
   !params.hasOwnProperty('libsodiumBinary') ||
   !params.hasOwnProperty('nodeStatsURL') ||
   !params.hasOwnProperty('cardanoCLI') ||
