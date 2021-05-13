@@ -1,5 +1,5 @@
 {
-  "poolId":           "",
+  "poolId":           "<YOUR_POOL_ID>",
   "vrfSkey":          "vrf.skey",
 
   "genesisShelley":   "../files/genesis.json",
