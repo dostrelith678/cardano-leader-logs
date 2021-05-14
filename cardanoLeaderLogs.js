@@ -32,7 +32,6 @@ if(
   !params.hasOwnProperty('vrfSkey') ||
   !params.hasOwnProperty('genesisShelley') ||
   !params.hasOwnProperty('genesisByron') ||
-  !params.hasOwnProperty('ledgerState') ||
   !params.hasOwnProperty('libsodiumBinary') ||
   !params.hasOwnProperty('nodeStatsURL') ||
   !params.hasOwnProperty('cardanoCLI') ||
@@ -54,6 +53,20 @@ const timeZone                = params.timeZone
 const vrfSkey                 = JSON.parse(fs.readFileSync(params.vrfSkey)).cborHex
 const genesisShelley          = JSON.parse(fs.readFileSync(params.genesisShelley))
 const genesisByron            = JSON.parse(fs.readFileSync(params.genesisByron))
+const magicString             = genesisShelley.networkId === 'Testnet' ?
+  '--testnet-magic ' + genesisShelley.networkMagic :
+  '--mainnet'
+
+async function getSigmaFromCLI(poolId) {
+  const stakeSnapshot = await callCLIForJSON(cardanoCLI + ' query stake-snapshot --stake-pool-id ' + poolId + ' ' +  magicString)
+  const activePoolStake = stakeSnapshot.poolStakeSet
+  const activeTotalStake = stakeSnapshot.activeStakeSet
+
+  console.log('             active stake:', activePoolStake)
+  console.log('              total stake:', activeTotalStake)
+
+  return activePoolStake / activeTotalStake
+}
 
 async function loadLedgerJson(filename) {
 
@@ -82,7 +95,6 @@ async function loadLedgerState(magicString) {
 
 }
 async function getLeaderLogs(firstSlotOfEpoch, poolVrfSkey, sigma, d, timeZone) {
-  
   let out = await execShellCommand('python3 ./isSlotLeader.py' +
     ' --first-slot-of-epoch ' + firstSlotOfEpoch +
     ' --epoch-nonce '         + epochNonce +
@@ -107,34 +119,7 @@ async function getLeaderLogs(firstSlotOfEpoch, poolVrfSkey, sigma, d, timeZone) 
 
 async function calculateLeaderLogs() {
 
-  const magicString           = genesisShelley.networkId === 'Testnet' ?
-    '--testnet-magic ' + genesisShelley.networkMagic :
-    '--mainnet'
-
   console.log('                  Network:', magicString)
-  console.log('     Loading ledger state:', params.ledgerState)
-
-  let ledger                  = null
-
-  if(params.ledgerState === null) {
-
-    ledger = await loadLedgerState(magicString)
-
-  } else {
-
-    try {
-
-      ledger = await loadLedgerJson(process.cwd()+'/ledgerstate.json');
-
-
-    } catch(e) {
-      console.log(e)
-      console.log('Could not load ledger state from config. Trying to generate new ledgerstate.json')
-
-      ledger = await loadLedgerState(magicString)
-    }
-  }
-
   console.log('                  Loading: protocol parameters')
 
   const protocolParameters    = await callCLIForJSON(cardanoCLI + ' query protocol-parameters ' + magicString)
@@ -142,7 +127,7 @@ async function calculateLeaderLogs() {
 
   const firstSlotOfEpoch      = await getFirstSlotOfEpoch(genesisByron, genesisShelley,
     tip.slot - (lastEpoch ? genesisShelley.epochLength : 0))
-  const sigma                 = await getSigma(poolId, ledger, lastEpoch)
+  const sigma                 = await getSigmaFromCLI(poolId)
   const poolVrfSkey           = vrfSkey.substr(4)
 
   let d = (parseFloat(protocolParameters.decentralization) + (lastEpoch ? 0.02 : 0))
