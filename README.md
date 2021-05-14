@@ -96,20 +96,16 @@ cardano-cli query protocol-state --mainnet | jq -r .csTickn.ticknStateEpochNonce
 
 ## run
 
-Switch to the project directory, so the ledger state is generated in this directory.
-This may take a while. Dumping the ledger state and going through 432000 slots takes time.
+Note: this method only works for current epoch block assignments. Calculating next epochs assignments based on next epoch's nonce is not supported.
 
 ```bash
-node cardanoLeaderLogs.js path/to/slotLeaderLogsConfig.json epochNonceHash [optional: 1] [optional: additionalDParameter, eg. 0.0]
+node cardanoLeaderLogs.js path/to/slotLeaderLogsConfig.json epochNonceHash
 ```
 
-Adam put up a service to retrieve the current and past epoch nonces. Those are also in epoch-nonce.txt
+Adam put up a service to retrieve the current and past epoch nonces.
 
 eg.:
 https://epoch-api.crypto2099.io:2096/epoch/236
-
-By using last epochs nonce and adding 1 at the end of the node call, you can replay the last epoch
-to verify last epochs block assignments.
 
 ## thanks
 
