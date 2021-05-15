@@ -1,6 +1,5 @@
 const fs                      = require('fs')
 
-const StreamObject = require('stream-json/streamers/StreamObject');
 const path = require('path');
 
 const { updateNodeStats }     = require('./nodeUtils.js')
@@ -68,32 +67,6 @@ async function getSigmaFromCLI(poolId) {
   return activePoolStake / activeTotalStake
 }
 
-async function loadLedgerJson(filename) {
-
-  return new Promise(function(resolve,reject){
-    const jsonStream = StreamObject.withParser();
-    let ledger = {}
-    jsonStream.on('data', ({key, value}) => {
-      ledger[key] = value;
-    });
-
-    jsonStream.on('end', () => {
-      console.log('Ledger loaded.');
-    });
-
-    fs.createReadStream(filename).pipe(jsonStream.input).on('end', () => {
-       resolve(ledger);
-    });
-  });
-}
-async function loadLedgerState(magicString) {
-
-  await execShellCommand(cardanoCLI + ' query ledger-state ' + magicString + ' > ' + process.cwd() + '/ledgerstate.json ')
-  ledger = await loadLedgerJson(process.cwd()+'/ledgerstate.json');
-
-  return ledger
-
-}
 async function getLeaderLogs(firstSlotOfEpoch, poolVrfSkey, sigma, d, timeZone) {
   let out = await execShellCommand('python3 ./isSlotLeader.py' +
     ' --first-slot-of-epoch ' + firstSlotOfEpoch +
