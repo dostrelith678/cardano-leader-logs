@@ -76,29 +76,35 @@ async function getLeaderLogs(
   d,
   timeZone
 ) {
-  let out = await execShellCommand(
-    "python3 ./isSlotLeader.py" +
-      " --first-slot-of-epoch " +
-      firstSlotOfEpoch +
-      " --epoch-nonce " +
-      epochNonce +
-      " --vrf-skey " +
-      poolVrfSkey +
-      " --sigma " +
-      sigma +
-      " --d " +
-      d +
-      " --epoch-length " +
-      genesisShelley.epochLength +
-      " --active-slots-coeff " +
-      genesisShelley.activeSlotsCoeff +
-      " --libsodium-binary " +
-      params.libsodiumBinary +
-      " --time-zone " +
-      timeZone
+  let sLeader = cp.spawnSync(
+    "python3",
+    [
+      "./isSlotLeader.py",
+      "--first-slot-of-epoch",
+      firstSlotOfEpoch,
+      "--epoch-nonce",
+      epochNonce,
+      "--vrf-skey",
+      poolVrfSkey,
+      "--sigma",
+      sigma,
+      "--d",
+      d,
+      "--epoch-length",
+      genesisShelley.epochLength,
+      "--active-slots-coeff",
+      genesisShelley.activeSlotsCoeff,
+      "--libsodium-binary",
+      params.libsodiumBinary,
+      "--time-zone",
+      timeZone,
+    ],
+    { encoding: "utf8" }
   );
 
-  let slots = JSON.parse(out);
+  sLeaderOutput = sLeader.stdout;
+  console.log(`stdout: ${sLeaderOutput}`);
+  let slots = JSON.parse(sLeaderOutput);
   let expectedBlocks = sigma * 21600 * (1.0 - d);
 
   console.log("");
@@ -125,11 +131,13 @@ async function calculateLeaderLogs() {
   );
   const tip = await callCLIForJSON(cardanoCLI + " query tip " + magicString);
 
+  console.log(`                  Loading: first slot of the current epoch`);
   const firstSlotOfEpoch = await getFirstSlotOfEpoch(
     genesisByron,
     genesisShelley,
     tip.slot - (lastEpoch ? genesisShelley.epochLength : 0)
   );
+  console.log(`                  Loading: sigma for pool ID: ${poolId}`);
   const sigma = await getSigmaFromCLI(poolId);
   const poolVrfSkey = vrfSkey.substr(4);
 
@@ -137,7 +145,8 @@ async function calculateLeaderLogs() {
 
   console.log("         firstSlotOfEpoch:", firstSlotOfEpoch);
   console.log("                    sigma:", sigma);
-
+  console.log("");
+  console.log("         Calculating leader slots...");
   await getLeaderLogs(firstSlotOfEpoch, poolVrfSkey, sigma, d, timeZone);
 
   if (overwriteDFactor >= 0.0) {
