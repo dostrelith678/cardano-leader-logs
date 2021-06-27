@@ -103,7 +103,6 @@ async function getLeaderLogs(
   );
 
   sLeaderOutput = sLeader.stdout;
-  console.log(`stdout: ${sLeaderOutput}`);
   let slots = JSON.parse(sLeaderOutput);
   let expectedBlocks = sigma * 21600 * (1.0 - d);
 
