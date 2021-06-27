@@ -1,11 +1,9 @@
 {
-  "poolId": "00000000000000000000000000000000000000000000000000000000",
+  "poolId": "<YOUR_POOL_ID>",
   "vrfSkey": "/path/to/vrf.skey",
 
   "genesisShelley": "/path/to/mainnet-shelley-genesis.json",
   "genesisByron": "/path/to/mainnet-byron-genesis.json",
-
-  "ledgerState": "/path/to/cardano-leader-logs/ledgerstate.json",
 
   "libsodiumBinary": "/usr/local/lib/libsodium.so",
   "cardanoCLI": "cardano-cli",
