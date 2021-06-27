@@ -1,28 +1,28 @@
 # cardano-leader-logs
+
 In a community effort, led by Andrew Westberg [BCSH], we implemented a way to retrieve stakepool slot leader logs.
 
-This is a nodejs + python implementation which was tested on Ubuntu 20.04.
+This is a `nodejs` + `python` implementation which was tested on Ubuntu 20.04.
 
-Japanese README: https://github.com/btbf/cardano-leader-logs
+**Note: this method only works for current epoch block assignments. Calculating next epochs assignments based on next epoch's nonce is not supported.**
 
-# installation
+Japanese README: https://github.com/btbf/cardano-leader-logs (outdated)
+
+# Installation
 
 ## Ubuntu 20.04
 
-### nodejs
+### Node.js
 
 ```bash
-curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -  
+curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt-get update
 sudo apt-get install -y nodejs
 
 export NODE_PATH=/usr/lib/node_modules/
-
-// Need to override the default heap memory limit for NodeJS
-export NODE_OPTIONS="--max-old-space-size=8192"
 ```
 
-### python3
+### Python
 
 ```bash
 sudo apt-get update
@@ -54,37 +54,31 @@ sudo make install
 
 The node does not need to run as a block producer as long as it has access to the correct `vrf.skey`.
 
+## Configuration file - `slotLeaderLogsConfig.json`
 
-
-
-## slotLeaderLogsConfig.json
-
-An example for epoch 221, which needs the below epoch nonce.  
-Add your pool id, the path to your pool vrf.skey, paths for both node configs. 
-As well as a path to the current ledgerstate.json, or null to generate a new one on runtime.
-libsodium must be build as always from: https://github.com/input-output-hk/libsodium
+Add your `poolId`, the path to your pool `vrf.skey`, and paths for both node genesis files (Shelley and Byron).
 Make sure to have the node stats available as seen below (or put your own port).
-The path to the cardano-cli could be a cardano-cli or ./cardano-cli depending on how you installed the cli previously.
+The path to the `cardano-cli` could be a `cardano-cli` or `./cardano-cli` depending on how you installed the CLI previously.
 
 ```javscript
 {
-  "poolId":           "00000000000000000000000000000000000000000000000000000000",
-  "vrfSkey":          "/path/to/vrf.skey",
+  "poolId":           "<YOUR_POOL_ID>",
+  "vrfSkey":          "vrf.skey", // path to pool's VRF signing key
 
-  "genesisShelley":   "/path/to/mainnet-shelley-genesis.json",
-  "genesisByron":     "/path/to/mainnet-byron-genesis.json",
+  "genesisShelley":   "../files/genesis.json", // path to Shelley genesis file
+  "genesisByron":     "../files/byron-genesis.json", // path to Byron genesis file
 
-  "ledgerState":      "/path/to/cardano-leader-logs/ledgerstate.json",
+  "libsodiumBinary":  "/usr/local/lib/libsodium.so", // path to Libsodium executable
+  "cardanoCLI":       "cardano-cli", // path to cardano-cli executable
+  "nodeStatsURL":     "http://127.0.0.1:12798/metrics", // location for node stats (from the node's `config.json`)
 
-  "libsodiumBinary":  "/usr/local/lib/libsodium.so",
-  "cardanoCLI":       "cardano-cli",
-  "nodeStatsURL":     "http://127.0.0.1:12798/metrics",
-  
-  "timeZone":         "Europe/Berlin"
+  "timeZone":         "Europe/London" // timezone to be used to display the block schedule in
 }
 ```
 
-## retrieving the epoch nonce
+## Retrieving the epoch nonce
+
+To manually retrieve the epoch nonce (required for block schedule calculation):
 
 ```
 cardano-cli query protocol-state --mainnet | jq -r .csTickn.ticknStateEpochNonce.contents
@@ -92,23 +86,39 @@ cardano-cli query protocol-state --mainnet | jq -r .csTickn.ticknStateEpochNonce
 0022cfa563a5328c4fb5c8017121329e964c26ade5d167b1bd9b2ec967772b60
 ```
 
+## Running
 
-## run
+1. Through the provided `runLeaderLogs.sh`:
+   By default, this script will look for the `slotLeaderLogsConfig.json` in the same directory -> this can be edited inside the script to specify another location for the config file:
 
-Note: this method only works for current epoch block assignments. Calculating next epochs assignments based on next epoch's nonce is not supported.
+```bash
+SLOTLEADER_CONFIG="slotLeaderLogsConfig.json" # path to configuration file
+```
+
+```bash
+./runLeaderLogs.sh
+
+...
+
+      Calculating leader slots...
+
+expected blocks with d == 0.00: xy
+assigned blocks with d == 0.00: xyz
+
+[
+  { index: 1, slot: 6354, date: '2021-06-25 00:30:45' }
+  ...
+]
+```
+
+2. Manually, by running:
 
 ```bash
 node cardanoLeaderLogs.js path/to/slotLeaderLogsConfig.json epochNonceHash
 ```
 
-Adam put up a service to retrieve the current and past epoch nonces.
-
-eg.:
-https://epoch-api.crypto2099.io:2096/epoch/236
-
-## thanks
+## Thanks
 
 Thanks to Andrew Westberg [BCSH], Papacarp [LOVE] and others who contributed.
 
-This repository was created by Marcel Baumberg [TITAN], now maintained by Damjan Ostrelic [EDEN].
-
+This repository was created by Marcel Baumberg [TITAN] and is now maintained by Damjan Ostrelic [EDEN].

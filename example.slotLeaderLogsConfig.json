@@ -1,0 +1,13 @@
+{
+  "poolId": "<YOUR_POOL_ID>",
+  "vrfSkey": "/path/to/vrf.skey",
+
+  "genesisShelley": "/path/to/mainnet-shelley-genesis.json",
+  "genesisByron": "/path/to/mainnet-byron-genesis.json",
+
+  "libsodiumBinary": "/usr/local/lib/libsodium.so",
+  "cardanoCLI": "cardano-cli",
+  "nodeStatsURL": "http://127.0.0.1:12798/metrics",
+
+  "timeZone": "Europe/Berlin"
+}

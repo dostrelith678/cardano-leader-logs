@@ -110,3 +110,9 @@ dist
 
 # Webstorm IDE
 .idea
+
+# VScode settings
+.vscode/
+
+# Configuration file
+slotLeaderLogsConfig.json
