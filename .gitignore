@@ -113,3 +113,6 @@ dist
 
 # VScode settings
 .vscode/
+
+# Configuration file
+slotLeaderLogsConfig.json
