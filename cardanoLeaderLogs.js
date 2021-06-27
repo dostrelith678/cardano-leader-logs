@@ -76,27 +76,52 @@ async function getLeaderLogs(
   d,
   timeZone
 ) {
-  async function getLeaderLogs(firstSlotOfEpoch, poolVrfSkey, sigma, d, timeZone) {
-    let out = await execShellCommand('python3 ./isSlotLeader.py' +
-      ' --first-slot-of-epoch ' + firstSlotOfEpoch +
-      ' --epoch-nonce '         + epochNonce +
-      ' --vrf-skey '            + poolVrfSkey +
-      ' --sigma '               + sigma +
-      ' --d '                   + d +
-      ' --epoch-length '        + genesisShelley.epochLength +
-      ' --active-slots-coeff '  + genesisShelley.activeSlotsCoeff +
-      ' --libsodium-binary '    + params.libsodiumBinary +
-      ' --time-zone '           + timeZone
-    )
-  
-    let slots = JSON.parse(out)
-    let expectedBlocks = (sigma * 21600 * (1.00 - d))
-  
-    console.log('')
-    console.log('expected blocks with d == ' + d.toFixed(2) + ':', expectedBlocks.toFixed(2))
-    console.log('assigned blocks with d == ' + d.toFixed(2) + ':', slots.length, 'max performance:', (slots.length / expectedBlocks * 100).toFixed(2) + '%')
-    console.log('')
-    console.log(slots)
+  async function getLeaderLogs(
+    firstSlotOfEpoch,
+    poolVrfSkey,
+    sigma,
+    d,
+    timeZone
+  ) {
+    let out = await execShellCommand(
+      "python3 ./isSlotLeader.py" +
+        " --first-slot-of-epoch " +
+        firstSlotOfEpoch +
+        " --epoch-nonce " +
+        epochNonce +
+        " --vrf-skey " +
+        poolVrfSkey +
+        " --sigma " +
+        sigma +
+        " --d " +
+        d +
+        " --epoch-length " +
+        genesisShelley.epochLength +
+        " --active-slots-coeff " +
+        genesisShelley.activeSlotsCoeff +
+        " --libsodium-binary " +
+        params.libsodiumBinary +
+        " --time-zone " +
+        timeZone
+    );
+
+    let slots = JSON.parse(out);
+    let expectedBlocks = sigma * 21600 * (1.0 - d);
+
+    console.log("");
+    console.log(
+      "expected blocks with d == " + d.toFixed(2) + ":",
+      expectedBlocks.toFixed(2)
+    );
+    console.log(
+      "assigned blocks with d == " + d.toFixed(2) + ":",
+      slots.length,
+      "max performance:",
+      ((slots.length / expectedBlocks) * 100).toFixed(2) + "%"
+    );
+    console.log("");
+    console.log(slots);
+  }
 }
 
 async function calculateLeaderLogs() {
