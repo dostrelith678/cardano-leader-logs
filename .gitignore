@@ -110,3 +110,6 @@ dist
 
 # Webstorm IDE
 .idea
+
+# VScode settings
+.vscode/
