@@ -1,5 +1,6 @@
 const fs = require("fs");
 const cp = require("child_process");
+const axios = require("axios");
 
 const { updateNodeStats } = require("./nodeUtils.js");
 const { getFirstSlotOfEpoch } = require("./nodeUtils.js");
@@ -13,8 +14,6 @@ if (process.argv.length < 4) {
     "Usage: node cardanoLeaderLogs.js path/to/leaderlogs.config epochNonce"
   );
 }
-
-let overwriteDFactor = -1.0;
 
 if (process.argv.length >= 6 && !isNaN(parseFloat(process.argv[5]))) {
   overwriteDFactor = parseFloat(process.argv[5]);
@@ -67,6 +66,22 @@ async function getSigmaFromCLI(poolId) {
   console.log("              total stake:", activeTotalStake);
 
   return activePoolStake / activeTotalStake;
+}
+
+async function getSigmaFromKoios(poolId, epoch) {
+  const poolActiveStakeUrl = `http://65.21.183.97:8053/pool_active_stake_cache?select=amount&pool_id=eq.${poolId}&epoch_no=eq.${epoch}`;
+  const epochActiveStakeUrl = `http://65.21.183.97:8053/epoch_active_stake_cache?select=amount&epoch_no=eq.${epoch}`;
+
+  const poolActiveStakeResponse = await axios.get(poolActiveStakeUrl);
+  const epochActiveStakeResponse = await axios.get(epochActiveStakeUrl);
+
+  const poolActiveStake = poolActiveStakeResponse.data[0].amount;
+  const epochActiveStake = epochActiveStakeResponse.data[0].amount;
+
+  console.log("             active stake:", poolActiveStake);
+  console.log("              total stake:", epochActiveStake);
+
+  return poolActiveStake / epochActiveStake;
 }
 
 async function getLeaderLogs(
@@ -137,7 +152,8 @@ async function calculateLeaderLogs() {
     tip.slot - (lastEpoch ? genesisShelley.epochLength : 0)
   );
   console.log(`                  Loading: sigma for pool ID: ${poolId}`);
-  const sigma = await getSigmaFromCLI(poolId);
+  // const sigma = await getSigmaFromCLI(poolId);
+  const sigma = await getSigmaFromKoios(poolId, tip.epoch);
   const poolVrfSkey = vrfSkey.substr(4);
 
   let d = parseFloat(protocolParameters.decentralization);
@@ -147,10 +163,6 @@ async function calculateLeaderLogs() {
   console.log("");
   console.log("         Calculating leader slots...");
   await getLeaderLogs(firstSlotOfEpoch, poolVrfSkey, sigma, d, timeZone);
-
-  if (overwriteDFactor >= 0.0) {
-    await getLeaderLogs(firstSlotOfEpoch, poolVrfSkey, sigma, overwriteDFactor);
-  }
 }
 
 async function main() {
