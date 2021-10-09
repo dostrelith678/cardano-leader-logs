@@ -1,5 +1,6 @@
 {
   "poolId": "<YOUR_POOL_ID>",
+  "poolIdBech32": "<YOUR_POOL_BECH32_ID (pool1...)",
   "vrfSkey": "/path/to/vrf.skey",
 
   "genesisShelley": "/path/to/mainnet-shelley-genesis.json",
