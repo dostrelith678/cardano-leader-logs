@@ -1,10 +1,10 @@
 # cardano-leader-logs
 
-In a community effort, led by Andrew Westberg [BCSH], we implemented a way to retrieve stakepool slot leader logs.
+In a community effort, led by Andrew Westberg [BCSH], we implemented a way to retrieve stake pool's slot leader logs (block schedules).
 
 This is a `nodejs` + `python` implementation which was tested on Ubuntu 20.04.
 
-**Note: this method only works for current epoch block assignments. Calculating next epochs assignments based on next epoch's nonce is not supported.**
+**Note: this method only works for current epoch block assignments. Calculating next epoch's assignments based on next epoch's nonce is not supported.**
 
 Japanese README: https://github.com/btbf/cardano-leader-logs (outdated)
 
@@ -18,8 +18,6 @@ Japanese README: https://github.com/btbf/cardano-leader-logs (outdated)
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt-get update
 sudo apt-get install -y nodejs
-
-export NODE_PATH=/usr/lib/node_modules/
 ```
 
 ### Python
@@ -52,17 +50,28 @@ sudo make install
 
 ### cardano-node
 
-The node does not need to run as a block producer as long as it has access to the correct `vrf.skey`.
+The node does not need to run as a block producer as long as it has access to the pool's `vrf.skey`.
 
-## Configuration file - `slotLeaderLogsConfig.json`
+### Clone the repo and install dependencies
 
-Add your `poolId`, the path to your pool `vrf.skey`, and paths for both node genesis files (Shelley and Byron).
-Make sure to have the node stats available as seen below (or put your own port).
-The path to the `cardano-cli` could be a `cardano-cli` or `./cardano-cli` depending on how you installed the CLI previously.
+```
+https://github.com/DamjanOstrelic/cardano-leader-logs.git
+cd cardano-leader-logs
+npm install
+```
+
+## Create configuration file - `slotLeaderLogsConfig.json`
+
+Add your `poolId`, `poolIdBech32`, the path to your pool's `vrf.skey`, and paths for node genesis files (Shelley and Byron).
+Make sure to have the node stats available as seen below (or change the `nodeStatsURL` port if not using the default one).
+The path to the `cardano-cli` can be `cardano-cli` (if in `$PATH`) or `absolute/path/to/cardano-cli`.
+
+Example file available in `example.slotLeaderLogsConfig.json`.
 
 ```javscript
 {
   "poolId":           "<YOUR_POOL_ID>",
+  "poolIdBech32":     "<YOUR_POOL_BECH32_ID (pool1...)", // bech32 encoded pool ID
   "vrfSkey":          "vrf.skey", // path to pool's VRF signing key
 
   "genesisShelley":   "../files/genesis.json", // path to Shelley genesis file
@@ -92,6 +101,7 @@ cardano-cli query protocol-state --mainnet | jq -r .csTickn.ticknStateEpochNonce
    By default, this script will look for the `slotLeaderLogsConfig.json` in the same directory -> this can be edited inside the script to specify another location for the config file:
 
 ```bash
+# runLeaderLogs.sh
 SLOTLEADER_CONFIG="slotLeaderLogsConfig.json" # path to configuration file
 ```
 
@@ -119,6 +129,4 @@ node cardanoLeaderLogs.js path/to/slotLeaderLogsConfig.json epochNonceHash
 
 ## Thanks
 
-Thanks to Andrew Westberg [BCSH], Papacarp [LOVE] and others who contributed.
-
-This repository was created by Marcel Baumberg [TITAN] and is now maintained by Damjan Ostrelic [EDEN].
+Thanks to Andrew Westberg [BCSH], Papacarp [LOVE], Marcel Baumberg [TITAN] and others who contributed.
