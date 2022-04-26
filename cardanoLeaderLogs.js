@@ -71,8 +71,8 @@ async function getSigmaFromCLI(poolId) {
 }
 
 async function getSigmaFromKoios(poolIdBech32, epoch) {
-  const poolActiveStakeUrl = `http://65.21.183.97:8053/pool_active_stake_cache?select=amount&pool_id=eq.${poolIdBech32}&epoch_no=eq.${epoch}`;
-  const epochActiveStakeUrl = `http://65.21.183.97:8053/epoch_active_stake_cache?select=amount&epoch_no=eq.${epoch}`;
+  const poolActiveStakeUrl = `https://api.koios.rest/api/v0/pool_active_stake_cache?select=amount&pool_id=eq.${poolIdBech32}&epoch_no=eq.${epoch}`;
+  const epochActiveStakeUrl = `https://api.koios.rest/api/v0/epoch_active_stake_cache?select=amount&epoch_no=eq.${epoch}`;
 
   const poolActiveStakeResponse = await axios.get(poolActiveStakeUrl);
   const epochActiveStakeResponse = await axios.get(epochActiveStakeUrl);
@@ -83,6 +83,10 @@ async function getSigmaFromKoios(poolIdBech32, epoch) {
   const epochActiveStake = epochActiveStakeResponse.data[0].amount
     ? epochActiveStakeResponse.data[0].amount
     : null;
+
+  if (poolActiveStake === null || epochActiveStake === null) {
+    throw `Failed to get pool sigma from Koios for pool: ${poolIdBech32}, epoch: ${epoch}.`;
+  }
 
   console.log("             active stake:", poolActiveStake);
   console.log("              total stake:", epochActiveStake);
@@ -162,9 +166,9 @@ async function calculateLeaderLogs() {
   let sigma;
   try {
     sigma = await getSigmaFromKoios(poolIdBech32, tip.epoch);
-  } catch {
+  } catch (e) {
     console.log(
-      "                  Failed to get sigma from Koios API, reverting to stake-snapshot parsing..."
+      `                  ${e.message} Reverting to stake-snapshot parsing...`
     );
 
     sigma = await getSigmaFromCLI(poolId);
