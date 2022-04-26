@@ -1,5 +1,6 @@
 const fs = require("fs");
 const cp = require("child_process");
+const axios = require("axios");
 
 const { updateNodeStats } = require("./nodeUtils.js");
 const { getFirstSlotOfEpoch } = require("./nodeUtils.js");
@@ -10,11 +11,9 @@ console.log("             process args:", process.argv);
 
 if (process.argv.length < 4) {
   throw Error(
-    "Usage: node cardanoLeaderLogs.js path/to/leaderlogs.config epochNonce"
+    "Usage: node cardanoLeaderLogs.js path/to/leaderLogs.config epochNonce"
   );
 }
-
-let overwriteDFactor = -1.0;
 
 if (process.argv.length >= 6 && !isNaN(parseFloat(process.argv[5]))) {
   overwriteDFactor = parseFloat(process.argv[5]);
@@ -24,6 +23,7 @@ const params = JSON.parse(fs.readFileSync(process.argv[2]));
 
 if (
   !params.hasOwnProperty("poolId") ||
+  !params.hasOwnProperty("poolIdBech32") ||
   !params.hasOwnProperty("vrfSkey") ||
   !params.hasOwnProperty("genesisShelley") ||
   !params.hasOwnProperty("genesisByron") ||
@@ -43,6 +43,7 @@ const lastEpoch = process.argv.length >= 5 && process.argv[4] === "1";
 console.log("     replaying last epoch: ", lastEpoch);
 
 const poolId = params.poolId;
+const poolIdBech32 = params.poolIdBech32;
 const timeZone = params.timeZone;
 const vrfSkey = JSON.parse(fs.readFileSync(params.vrfSkey)).cborHex;
 const genesisShelley = JSON.parse(fs.readFileSync(params.genesisShelley));
@@ -67,6 +68,30 @@ async function getSigmaFromCLI(poolId) {
   console.log("              total stake:", activeTotalStake);
 
   return activePoolStake / activeTotalStake;
+}
+
+async function getSigmaFromKoios(poolIdBech32, epoch) {
+  const poolActiveStakeUrl = `https://api.koios.rest/api/v0/pool_active_stake_cache?select=amount&pool_id=eq.${poolIdBech32}&epoch_no=eq.${epoch}`;
+  const epochActiveStakeUrl = `https://api.koios.rest/api/v0/epoch_active_stake_cache?select=amount&epoch_no=eq.${epoch}`;
+
+  const poolActiveStakeResponse = await axios.get(poolActiveStakeUrl);
+  const epochActiveStakeResponse = await axios.get(epochActiveStakeUrl);
+
+  const poolActiveStake = poolActiveStakeResponse.data[0].amount
+    ? poolActiveStakeResponse.data[0].amount
+    : null;
+  const epochActiveStake = epochActiveStakeResponse.data[0].amount
+    ? epochActiveStakeResponse.data[0].amount
+    : null;
+
+  if (poolActiveStake === null || epochActiveStake === null) {
+    throw `Failed to get pool sigma from Koios for pool: ${poolIdBech32}, epoch: ${epoch}.`;
+  }
+
+  console.log("             active stake:", poolActiveStake);
+  console.log("              total stake:", epochActiveStake);
+
+  return poolActiveStake / epochActiveStake;
 }
 
 async function getLeaderLogs(
@@ -136,8 +161,19 @@ async function calculateLeaderLogs() {
     genesisShelley,
     tip.slot - (lastEpoch ? genesisShelley.epochLength : 0)
   );
+
   console.log(`                  Loading: sigma for pool ID: ${poolId}`);
-  const sigma = await getSigmaFromCLI(poolId);
+  let sigma;
+  try {
+    sigma = await getSigmaFromKoios(poolIdBech32, tip.epoch);
+  } catch (e) {
+    console.log(
+      `                  ${e.message} Reverting to stake-snapshot parsing...`
+    );
+
+    sigma = await getSigmaFromCLI(poolId);
+  }
+
   const poolVrfSkey = vrfSkey.substr(4);
 
   let d = parseFloat(protocolParameters.decentralization);
@@ -147,10 +183,6 @@ async function calculateLeaderLogs() {
   console.log("");
   console.log("         Calculating leader slots...");
   await getLeaderLogs(firstSlotOfEpoch, poolVrfSkey, sigma, d, timeZone);
-
-  if (overwriteDFactor >= 0.0) {
-    await getLeaderLogs(firstSlotOfEpoch, poolVrfSkey, sigma, overwriteDFactor);
-  }
 }
 
 async function main() {
