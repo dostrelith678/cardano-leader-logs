@@ -80,11 +80,11 @@ async function getSigmaFromKoios(poolIdBech32, epoch) {
   });
   const epochActiveStakeResponse = await axios.get(epochActiveStakeUrl);
 
-  const poolActiveStake = poolActiveStakeResponse.data[0].amount
-    ? poolActiveStakeResponse.data[0].amount
+  const poolActiveStake = poolActiveStakeResponse.data[0].active_stake
+    ? poolActiveStakeResponse.data[0].active_stake
     : null;
-  const epochActiveStake = epochActiveStakeResponse.data[0].amount
-    ? epochActiveStakeResponse.data[0].amount
+  const epochActiveStake = epochActiveStakeResponse.data[0].active_stake
+    ? epochActiveStakeResponse.data[0].active_stake
     : null;
 
   if (poolActiveStake === null || epochActiveStake === null) {
