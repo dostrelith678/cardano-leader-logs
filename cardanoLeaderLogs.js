@@ -1,6 +1,7 @@
 const fs = require("fs");
 const cp = require("child_process");
 const axios = require("axios");
+const prompt = require("prompt");
 
 const { updateNodeStats } = require("./nodeUtils.js");
 const { getFirstSlotOfEpoch } = require("./nodeUtils.js");
@@ -71,10 +72,12 @@ async function getSigmaFromCLI(poolId) {
 }
 
 async function getSigmaFromKoios(poolIdBech32, epoch) {
-  const poolActiveStakeUrl = `https://api.koios.rest/api/v0/pool_active_stake_cache?select=amount&pool_id=eq.${poolIdBech32}&epoch_no=eq.${epoch}`;
-  const epochActiveStakeUrl = `https://api.koios.rest/api/v0/epoch_active_stake_cache?select=amount&epoch_no=eq.${epoch}`;
+  const poolActiveStakeUrl = `https://api.koios.rest/api/v0/pool_info?select=active_stake`;
+  const epochActiveStakeUrl = `https://api.koios.rest/api/v0/epoch_info?_epoch_no=${epoch}&select=active_stake`;
 
-  const poolActiveStakeResponse = await axios.get(poolActiveStakeUrl);
+  const poolActiveStakeResponse = await axios.post(poolActiveStakeUrl, {
+    _pool_bech32_ids: [poolIdBech32],
+  });
   const epochActiveStakeResponse = await axios.get(epochActiveStakeUrl);
 
   const poolActiveStake = poolActiveStakeResponse.data[0].amount
@@ -167,11 +170,29 @@ async function calculateLeaderLogs() {
   try {
     sigma = await getSigmaFromKoios(poolIdBech32, tip.epoch);
   } catch (e) {
-    console.log(
-      `                  ${e.message} Reverting to stake-snapshot parsing...`
-    );
+    console.log("");
+    console.log(e);
 
-    sigma = await getSigmaFromCLI(poolId);
+    prompt.colors = false;
+    prompt.start();
+    const { proceed } = await prompt.get({
+      properties: {
+        proceed: {
+          description:
+            "Do you want to revert to ledger-state parsing (memory-intensive)? [Y / N]",
+        },
+      },
+    });
+
+    if (proceed.toLowerCase() == "y") {
+      console.log(
+        "                  Proceeding with stake-snapshot parsing for sigma value..."
+      );
+      sigma = await getSigmaFromCLI(poolId);
+    } else {
+      console.log("Exiting...");
+      process.exit(1);
+    }
   }
 
   const poolVrfSkey = vrfSkey.substr(4);
