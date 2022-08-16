@@ -86,38 +86,35 @@ libsodium.sodium_init()
 
 
 def mkSeed(slot, eta0):
-
-    h = hashlib.blake2b(digest_size=32)
-    h.update(bytearray([0, 0, 0, 0, 0, 0, 0, 1]))  #neutral nonce
-    seedLbytes = h.digest()
-
     h = hashlib.blake2b(digest_size=32)
     h.update(slot.to_bytes(8, byteorder='big') + binascii.unhexlify(eta0))
     slotToSeedBytes = h.digest()
 
-    seed = [x ^ slotToSeedBytes[i] for i, x in enumerate(seedLbytes)]
-
-    return bytes(seed)
+    return slotToSeedBytes
 
 
-def vrfEvalCertified(seed, tpraosCanBeLeaderSignKeyVRF):
-    if isinstance(seed, bytes) and isinstance(tpraosCanBeLeaderSignKeyVRF,
+def vrfEvalCertified(seed, praosCanBeLeaderSignKeyVRF):
+    if isinstance(seed, bytes) and isinstance(praosCanBeLeaderSignKeyVRF,
                                               bytes):
         proof = create_string_buffer(
             libsodium.crypto_vrf_ietfdraft03_proofbytes())
-
-        libsodium.crypto_vrf_prove(proof, tpraosCanBeLeaderSignKeyVRF, seed,
+        libsodium.crypto_vrf_prove(proof, praosCanBeLeaderSignKeyVRF, seed,
                                    len(seed))
-
         proofHash = create_string_buffer(libsodium.crypto_vrf_outputbytes())
-
         libsodium.crypto_vrf_proof_to_hash(proofHash, proof)
 
         return proofHash.raw
-
     else:
         print("error.  Feed me bytes")
         exit()
+
+
+def vrfLeaderValue(rawVrf):
+    prefix = str.encode("L")
+    rawVrfBytes = int.to_bytes(rawVrf, byteorder="big", signed=False)
+    vrfLeaderValueBytes = prefix + rawVrfBytes
+
+    return int.from_bytes(vrfLeaderValueBytes, byteorder="big", signed=False)
 
 
 def isOverlaySlot(firstSlotOfEpoch, currentSlot, decentralizationParam):
@@ -139,11 +136,12 @@ def isOverlaySlot(firstSlotOfEpoch, currentSlot, decentralizationParam):
 
 def isSlotLeader(slot, activeSlotsCoeff, sigma, eta0, poolVrfSkey):
     seed = mkSeed(slot, eta0)
-    tpraosCanBeLeaderSignKeyVRFb = binascii.unhexlify(poolVrfSkey)
-    cert = vrfEvalCertified(seed, tpraosCanBeLeaderSignKeyVRFb)
+    praosCanBeLeaderSignKeyVRFb = binascii.unhexlify(poolVrfSkey)
+    cert = vrfEvalCertified(seed, praosCanBeLeaderSignKeyVRFb)
     certNat = int.from_bytes(cert, byteorder="big", signed=False)
-    certNatMax = math.pow(2, 512)
-    denominator = certNatMax - certNat
+    certLeaderVrf = vrfLeaderValue(certNat)
+    certNatMax = math.pow(2, 256)
+    denominator = certNatMax - certLeaderVrf
     q = certNatMax / denominator
     c = math.log(1.0 - activeSlotsCoeff)
     sigmaOfF = math.exp(-sigma * c)
