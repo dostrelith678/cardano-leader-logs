@@ -109,10 +109,11 @@ def vrfEvalCertified(seed, praosCanBeLeaderSignKeyVRF):
         exit()
 
 
-def vrfLeaderValue(rawVrf):
-    prefix = str.encode("L")
-    rawVrfBytes = int.to_bytes(rawVrf, byteorder="big", signed=False)
-    vrfLeaderValueBytes = prefix + rawVrfBytes
+def vrfLeaderValue(vrfCert):
+    h = hashlib.blake2b(digest_size=32)
+    h.update(str.encode("L"))
+    h.update(vrfCert)
+    vrfLeaderValueBytes = h.digest()
 
     return int.from_bytes(vrfLeaderValueBytes, byteorder="big", signed=False)
 
@@ -138,13 +139,13 @@ def isSlotLeader(slot, activeSlotsCoeff, sigma, eta0, poolVrfSkey):
     seed = mkSeed(slot, eta0)
     praosCanBeLeaderSignKeyVRFb = binascii.unhexlify(poolVrfSkey)
     cert = vrfEvalCertified(seed, praosCanBeLeaderSignKeyVRFb)
-    certNat = int.from_bytes(cert, byteorder="big", signed=False)
-    certLeaderVrf = vrfLeaderValue(certNat)
+    certLeaderVrf = vrfLeaderValue(cert)
     certNatMax = math.pow(2, 256)
     denominator = certNatMax - certLeaderVrf
     q = certNatMax / denominator
     c = math.log(1.0 - activeSlotsCoeff)
     sigmaOfF = math.exp(-sigma * c)
+
     return q <= sigmaOfF
 
 
