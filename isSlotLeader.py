@@ -20,6 +20,10 @@ parser.add_argument('--epoch-length',
                     dest='epochLength',
                     help='the epoch length [e.g. 432000]',
                     required=True)
+parser.add_argument('--genesis-start',
+                    dest='genesisStart',
+                    help='network start time',
+                    required=True)
 parser.add_argument('--first-slot-of-epoch',
                     type=int,
                     dest='fslot',
@@ -63,6 +67,7 @@ parser.add_argument('--time-zone',
 args = parser.parse_args()
 
 epochLength = args.epochLength
+genesisStart = args.genesisStart
 activeSlotsCoeff = args.activeSlotsCoeff
 firstSlotOfEpoch = args.fslot
 sigma = args.sigma
@@ -70,6 +75,16 @@ eta0 = args.eta0
 poolVrfSkey = args.skey
 decentralizationParam = args.d
 timezone = 'Europe/Berlin' if args.timezone not in pytz.all_timezones else args.timezone
+
+
+def getGenesisStartEpoch(genesisStart):
+    genesis_start_date_obj = datetime.strptime(genesisStart,
+                                               '%Y-%m-%dT%H:%M:%SZ')
+    genesis_start_date_obj = genesis_start_date_obj.replace(tzinfo=pytz.UTC)
+    genesis_start_epoch = genesis_start_date_obj.timestamp()
+
+    return int(genesis_start_epoch)
+
 
 slotcount = 0
 try:
@@ -160,7 +175,9 @@ for slot in range(firstSlotOfEpoch, epochLength + firstSlotOfEpoch):
         if slotcount > 0:
             print("    ,")
         slotcount += 1
-        timestamp = datetime.fromtimestamp(slot + 1591566291, tz=local_tz)
+        timestamp = datetime.fromtimestamp(slot +
+                                           getGenesisStartEpoch(genesisStart),
+                                           tz=local_tz)
         print("    {")
         print("      \"index\":      " + str(slotcount) + ",")
         print("      \"slot\":       " + str(slot - firstSlotOfEpoch) + ",")

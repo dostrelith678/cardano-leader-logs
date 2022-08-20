@@ -110,6 +110,8 @@ async function getLeaderLogs (
       './isSlotLeader.py',
       '--first-slot-of-epoch',
       firstSlotOfEpoch,
+      '--genesis-start',
+      genesisShelley.systemStart,
       '--epoch-nonce',
       epochNonce,
       '--vrf-skey',
