@@ -20,6 +20,10 @@ parser.add_argument('--epoch-length',
                     dest='epochLength',
                     help='the epoch length [e.g. 432000]',
                     required=True)
+parser.add_argument('--genesis-start',
+                    dest='genesisStart',
+                    help='network start time',
+                    required=True)
 parser.add_argument('--first-slot-of-epoch',
                     type=int,
                     dest='fslot',
@@ -63,6 +67,7 @@ parser.add_argument('--time-zone',
 args = parser.parse_args()
 
 epochLength = args.epochLength
+genesisStart = args.genesisStart
 activeSlotsCoeff = args.activeSlotsCoeff
 firstSlotOfEpoch = args.fslot
 sigma = args.sigma
@@ -70,6 +75,16 @@ eta0 = args.eta0
 poolVrfSkey = args.skey
 decentralizationParam = args.d
 timezone = 'Europe/Berlin' if args.timezone not in pytz.all_timezones else args.timezone
+
+
+def getGenesisStartEpoch(genesisStart):
+    genesis_start_date_obj = datetime.strptime(genesisStart,
+                                               '%Y-%m-%dT%H:%M:%SZ')
+    genesis_start_date_obj = genesis_start_date_obj.replace(tzinfo=pytz.UTC)
+    genesis_start_epoch = genesis_start_date_obj.timestamp()
+
+    return int(genesis_start_epoch)
+
 
 slotcount = 0
 try:
@@ -86,38 +101,36 @@ libsodium.sodium_init()
 
 
 def mkSeed(slot, eta0):
-
-    h = hashlib.blake2b(digest_size=32)
-    h.update(bytearray([0, 0, 0, 0, 0, 0, 0, 1]))  #neutral nonce
-    seedLbytes = h.digest()
-
     h = hashlib.blake2b(digest_size=32)
     h.update(slot.to_bytes(8, byteorder='big') + binascii.unhexlify(eta0))
     slotToSeedBytes = h.digest()
 
-    seed = [x ^ slotToSeedBytes[i] for i, x in enumerate(seedLbytes)]
-
-    return bytes(seed)
+    return slotToSeedBytes
 
 
-def vrfEvalCertified(seed, tpraosCanBeLeaderSignKeyVRF):
-    if isinstance(seed, bytes) and isinstance(tpraosCanBeLeaderSignKeyVRF,
+def vrfEvalCertified(seed, praosCanBeLeaderSignKeyVRF):
+    if isinstance(seed, bytes) and isinstance(praosCanBeLeaderSignKeyVRF,
                                               bytes):
         proof = create_string_buffer(
             libsodium.crypto_vrf_ietfdraft03_proofbytes())
-
-        libsodium.crypto_vrf_prove(proof, tpraosCanBeLeaderSignKeyVRF, seed,
+        libsodium.crypto_vrf_prove(proof, praosCanBeLeaderSignKeyVRF, seed,
                                    len(seed))
-
         proofHash = create_string_buffer(libsodium.crypto_vrf_outputbytes())
-
         libsodium.crypto_vrf_proof_to_hash(proofHash, proof)
 
         return proofHash.raw
-
     else:
         print("error.  Feed me bytes")
         exit()
+
+
+def vrfLeaderValue(vrfCert):
+    h = hashlib.blake2b(digest_size=32)
+    h.update(str.encode("L"))
+    h.update(vrfCert)
+    vrfLeaderValueBytes = h.digest()
+
+    return int.from_bytes(vrfLeaderValueBytes, byteorder="big", signed=False)
 
 
 def isOverlaySlot(firstSlotOfEpoch, currentSlot, decentralizationParam):
@@ -139,14 +152,15 @@ def isOverlaySlot(firstSlotOfEpoch, currentSlot, decentralizationParam):
 
 def isSlotLeader(slot, activeSlotsCoeff, sigma, eta0, poolVrfSkey):
     seed = mkSeed(slot, eta0)
-    tpraosCanBeLeaderSignKeyVRFb = binascii.unhexlify(poolVrfSkey)
-    cert = vrfEvalCertified(seed, tpraosCanBeLeaderSignKeyVRFb)
-    certNat = int.from_bytes(cert, byteorder="big", signed=False)
-    certNatMax = math.pow(2, 512)
-    denominator = certNatMax - certNat
+    praosCanBeLeaderSignKeyVRFb = binascii.unhexlify(poolVrfSkey)
+    cert = vrfEvalCertified(seed, praosCanBeLeaderSignKeyVRFb)
+    certLeaderVrf = vrfLeaderValue(cert)
+    certNatMax = math.pow(2, 256)
+    denominator = certNatMax - certLeaderVrf
     q = certNatMax / denominator
     c = math.log(1.0 - activeSlotsCoeff)
     sigmaOfF = math.exp(-sigma * c)
+
     return q <= sigmaOfF
 
 
@@ -161,7 +175,9 @@ for slot in range(firstSlotOfEpoch, epochLength + firstSlotOfEpoch):
         if slotcount > 0:
             print("    ,")
         slotcount += 1
-        timestamp = datetime.fromtimestamp(slot + 1591566291, tz=local_tz)
+        timestamp = datetime.fromtimestamp(slot +
+                                           getGenesisStartEpoch(genesisStart),
+                                           tz=local_tz)
         print("    {")
         print("      \"index\":      " + str(slotcount) + ",")
         print("      \"slot\":       " + str(slot - firstSlotOfEpoch) + ",")
