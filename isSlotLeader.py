@@ -176,7 +176,7 @@ for slot in range(firstSlotOfEpoch, epochLength + firstSlotOfEpoch):
             print("    ,")
         slotcount += 1
         timestamp = datetime.fromtimestamp(slot +
-                                           getGenesisStartEpoch(genesisStart),
+                                           1591566291,
                                            tz=local_tz)
         print("    {")
         print("      \"index\":      " + str(slotcount) + ",")
