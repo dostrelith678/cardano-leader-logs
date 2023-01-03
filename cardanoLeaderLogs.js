@@ -3,11 +3,6 @@ const cp = require('child_process')
 const axios = require('axios')
 const prompt = require('prompt')
 
-const { updateNodeStats } = require('./nodeUtils.js')
-const { getFirstSlotOfEpoch } = require('./nodeUtils.js')
-
-const { callCLIForJSON } = require('./cliUtils.js')
-
 console.log('             process args:', process.argv)
 
 if (process.argv.length < 4) {
@@ -67,7 +62,7 @@ async function getSnapshotDataFromKoios (poolIdBech32, targetSnapshot) {
 
   const poolSnapshotData = poolSnapshotResponse.data[0]
 
-  if (poolSnapshotData.epochNonce == null) {
+  if (poolSnapshotData.nonce == null) {
     throw Error(
       `Epoch nonce for epoch ${poolSnapshotData.epoch_no} is unavailable.`
     )
@@ -86,6 +81,7 @@ async function getSnapshotDataFromKoios (poolIdBech32, targetSnapshot) {
 
   return {
     epoch_no: poolSnapshotData.epoch_no,
+    nonce: poolSnapshotData.nonce,
     sigma: poolSnapshotData.pool_stake / poolSnapshotData.active_stake
   }
 }
@@ -94,7 +90,7 @@ async function getLeaderLogs (
   firstSlotOfEpoch,
   poolVrfSkey,
   sigma,
-  d,
+  nonce,
   timeZone
 ) {
   let sLeader = cp.spawnSync(
@@ -106,13 +102,13 @@ async function getLeaderLogs (
       '--genesis-start',
       genesisShelley.systemStart,
       '--epoch-nonce',
-      epochNonce,
+      nonce,
       '--vrf-skey',
       poolVrfSkey,
       '--sigma',
       sigma,
       '--d',
-      d,
+      0,
       '--epoch-length',
       genesisShelley.epochLength,
       '--active-slots-coeff',
@@ -130,12 +126,9 @@ async function getLeaderLogs (
   let expectedBlocks = sigma * 21600
 
   console.log('')
+  console.log('expected blocks with d == ' + 0 + ':', expectedBlocks.toFixed(2))
   console.log(
-    'expected blocks with d == ' + d.toFixed(2) + ':',
-    expectedBlocks.toFixed(2)
-  )
-  console.log(
-    'assigned blocks with d == ' + d.toFixed(2) + ':',
+    'assigned blocks with d == ' + 0 + ':',
     slots.length,
     'max performance:',
     ((slots.length / expectedBlocks) * 100).toFixed(2) + '%'
@@ -145,7 +138,7 @@ async function getLeaderLogs (
 }
 
 async function calculateLeaderLogs () {
-  console.log('                  Network:', magicString)
+  console.log('                  Network: mainnet')
   console.log(
     `                  Starting leader logs calculation for ${targetEpoch} epoch`
   )
@@ -169,7 +162,13 @@ async function calculateLeaderLogs () {
   console.log('            pool VRF sKey:', poolVrfSkey)
   console.log('')
   console.log('         Calculating leader slots...')
-  await getLeaderLogs(firstSlotOfEpoch, poolVrfSkey, sigma, d, timeZone)
+  await getLeaderLogs(
+    firstSlotOfEpoch,
+    poolVrfSkey,
+    poolSnapshotData.sigma,
+    poolSnapshotData.nonce,
+    timeZone
+  )
 }
 
 async function main () {
