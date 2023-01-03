@@ -29,6 +29,7 @@ if (
   throw Error('Invalid leaderLogsConfig.json')
 }
 
+const genesisShelley = JSON.parse(fs.readFileSync(params.genesisShelley))
 const targetEpoch = process.argv[3]
 const targetSnapshot =
   targetEpoch == 'previous'
@@ -49,6 +50,15 @@ const poolId = params.poolId
 const poolIdBech32 = params.poolIdBech32
 const timeZone = params.timeZone
 const vrfSkey = JSON.parse(fs.readFileSync(params.vrfSkey)).cborHex
+
+function getFirstSlotOfEpoch (epoch, genesisShelley) {
+  // First slot of epoch 211
+  refSlot = 5788800
+
+  firstSlotOfEpoch = refSlot + (epoch - 211) * genesisShelley.epochLength
+
+  return firstSlotOfEpoch
+}
 
 async function getSnapshotDataFromKoios (poolIdBech32, targetSnapshot) {
   const poolSnapshotUrl = `https://api.koios.rest/api/v0/pool_stake_snapshot?_pool_bech32=${poolIdBech32}&snapshot=eq.${targetSnapshot}`
@@ -148,7 +158,8 @@ async function calculateLeaderLogs () {
     `                  Loading: first slot of epoch ${poolSnapshotData.epoch_no}`
   )
   const firstSlotOfEpoch = await getFirstSlotOfEpoch(
-    poolSnapshotData.epoch_nogenesisShelley
+    poolSnapshotData.epoch_no,
+    genesisShelley
   )
 
   const poolVrfSkey = vrfSkey.substr(4)
