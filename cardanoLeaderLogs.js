@@ -12,12 +12,8 @@ console.log('             process args:', process.argv)
 
 if (process.argv.length < 4) {
   throw Error(
-    'Usage: node cardanoLeaderLogs.js path/to/leaderLogs.config epochNonce'
+    'Usage: node cardanoLeaderLogs.js <path/to/leaderLogs.config> <previous | current | next (epoch)>'
   )
-}
-
-if (process.argv.length >= 6 && !isNaN(parseFloat(process.argv[5]))) {
-  overwriteDFactor = parseFloat(process.argv[5])
 }
 
 const params = JSON.parse(fs.readFileSync(process.argv[2]))
@@ -27,74 +23,61 @@ if (
   !params.hasOwnProperty('poolIdBech32') ||
   !params.hasOwnProperty('vrfSkey') ||
   !params.hasOwnProperty('genesisShelley') ||
-  !params.hasOwnProperty('genesisByron') ||
   !params.hasOwnProperty('libsodiumBinary') ||
-  !params.hasOwnProperty('nodeStatsURL') ||
-  !params.hasOwnProperty('cardanoCLI') ||
   !params.hasOwnProperty('timeZone')
 ) {
   throw Error('Invalid leaderLogsConfig.json')
 }
 
-const cardanoCLI = params.cardanoCLI
+const targetEpoch = process.argv[3]
+const targetSnapshot =
+  targetEpoch == 'previous'
+    ? 'Go'
+    : targetEpoch == 'current'
+    ? 'Set'
+    : targetEpoch == 'next'
+    ? 'Mark'
+    : 'unknown'
 
-const epochNonce = process.argv[3]
-const lastEpoch = process.argv.length >= 5 && process.argv[4] === '1'
-
-console.log('     replaying last epoch: ', lastEpoch)
+if (targetSnapshot == 'unknown') {
+  throw Error(
+    'Invalid target epoch format, please use one of: <previous | current | next>.'
+  )
+}
 
 const poolId = params.poolId
 const poolIdBech32 = params.poolIdBech32
 const timeZone = params.timeZone
 const vrfSkey = JSON.parse(fs.readFileSync(params.vrfSkey)).cborHex
-const genesisShelley = JSON.parse(fs.readFileSync(params.genesisShelley))
-const genesisByron = JSON.parse(fs.readFileSync(params.genesisByron))
-const magicString =
-  genesisShelley.networkId === 'Testnet'
-    ? '--testnet-magic ' + genesisShelley.networkMagic
-    : '--mainnet'
 
-async function getSigmaFromCLI (poolId) {
-  const stakeSnapshot = await callCLIForJSON(
-    cardanoCLI +
-      ' query stake-snapshot --stake-pool-id ' +
-      poolId +
-      ' ' +
-      magicString
-  )
-  const activePoolStake = stakeSnapshot.poolStakeSet
-  const activeTotalStake = stakeSnapshot.activeStakeSet
+async function getSnapshotDataFromKoios (poolIdBech32, targetSnapshot) {
+  const poolSnapshotUrl = `https://api.koios.rest/api/v0/pool_stake_snapshot?_pool_bech32=${poolIdBech32}&snapshot=eq.${targetSnapshot}`
 
-  console.log('             active stake:', activePoolStake)
-  console.log('              total stake:', activeTotalStake)
+  const poolSnapshotResponse = await axios.get(poolSnapshotUrl)
 
-  return activePoolStake / activeTotalStake
-}
+  const poolSnapshotData = poolSnapshotResponse.data[0]
 
-async function getSigmaFromKoios (poolIdBech32, epoch) {
-  const poolActiveStakeUrl = `https://api.koios.rest/api/v0/pool_info?select=active_stake`
-  const epochActiveStakeUrl = `https://api.koios.rest/api/v0/epoch_info?_epoch_no=${epoch}&select=active_stake`
+  if (poolSnapshotData.epochNonce == null) {
+    throw Error(
+      `Epoch nonce for epoch ${poolSnapshotData.epoch_no} is unavailable.`
+    )
+  }
 
-  const poolActiveStakeResponse = await axios.post(poolActiveStakeUrl, {
-    _pool_bech32_ids: [poolIdBech32]
-  })
-  const epochActiveStakeResponse = await axios.get(epochActiveStakeUrl)
-
-  const poolActiveStake = poolActiveStakeResponse.data[0].active_stake
-    ? poolActiveStakeResponse.data[0].active_stake
-    : null
-  const epochActiveStake = epochActiveStakeResponse.data[0].active_stake
-    ? epochActiveStakeResponse.data[0].active_stake
-    : null
-
-  if (poolActiveStake === null || epochActiveStake === null) {
+  if (
+    poolSnapshotData.pool_stake === null ||
+    poolSnapshotData.active_stake === null
+  ) {
     throw `Failed to get pool sigma from Koios for pool: ${poolIdBech32}, epoch: ${epoch}.`
   }
 
-  console.log('             active stake:', poolActiveStake)
-  console.log('              total stake:', epochActiveStake)
+  console.log('                    Epoch:', poolSnapshotData.epoch_no)
+  console.log('             Active stake:', poolSnapshotData.pool_stake)
+  console.log('              Total stake:', poolSnapshotData.active_stake)
 
-  return poolActiveStake / epochActiveStake
+  return {
+    epoch_no: poolSnapshotData.epoch_no,
+    sigma: poolSnapshotData.pool_stake / poolSnapshotData.active_stake
+  }
 }
 
 async function getLeaderLogs (
@@ -134,7 +117,7 @@ async function getLeaderLogs (
 
   sLeaderOutput = sLeader.stdout
   let slots = JSON.parse(sLeaderOutput)
-  let expectedBlocks = sigma * 21600 * (1.0 - d)
+  let expectedBlocks = sigma * 21600
 
   console.log('')
   console.log(
@@ -153,52 +136,25 @@ async function getLeaderLogs (
 
 async function calculateLeaderLogs () {
   console.log('                  Network:', magicString)
-
-  const tip = await callCLIForJSON(cardanoCLI + ' query tip ' + magicString)
-
-  console.log(`                  Loading: first slot of the current epoch`)
-  const firstSlotOfEpoch = await getFirstSlotOfEpoch(
-    genesisByron,
-    genesisShelley,
-    tip.slot - (lastEpoch ? genesisShelley.epochLength : 0)
+  console.log(
+    `                  Starting leader logs calculation for ${targetEpoch} epoch`
   )
-
-  console.log(`                  Loading: sigma for pool ID: ${poolId}`)
-  let sigma
-  try {
-    sigma = await getSigmaFromKoios(poolIdBech32, tip.epoch)
-  } catch (e) {
-    console.log('')
-    console.log(e)
-
-    prompt.colors = false
-    prompt.start()
-    const { proceed } = await prompt.get({
-      properties: {
-        proceed: {
-          description:
-            'Do you want to revert to ledger-state parsing (memory-intensive)? [Y / N]'
-        }
-      }
-    })
-
-    if (proceed.toLowerCase() == 'y') {
-      console.log(
-        '                  Proceeding with stake-snapshot parsing for sigma value...'
-      )
-      sigma = await getSigmaFromCLI(poolId)
-    } else {
-      console.log('Exiting...')
-      process.exit(1)
-    }
-  }
+  console.log(`                  Loading: pool stake snapshot data from Koios`)
+  const poolSnapshotData = await getSnapshotDataFromKoios(
+    poolIdBech32,
+    targetSnapshot
+  )
+  console.log(
+    `                  Loading: first slot of epoch ${poolSnapshotData.epoch_no}`
+  )
+  const firstSlotOfEpoch = await getFirstSlotOfEpoch(
+    poolSnapshotData.epoch_nogenesisShelley
+  )
 
   const poolVrfSkey = vrfSkey.substr(4)
 
-  let d = 0
-
   console.log('         firstSlotOfEpoch:', firstSlotOfEpoch)
-  console.log('                    sigma:', sigma)
+  console.log('                    sigma:', poolSnapshotData.sigma)
   console.log('            pool VRF sKey:', poolVrfSkey)
   console.log('')
   console.log('         Calculating leader slots...')
@@ -206,7 +162,6 @@ async function calculateLeaderLogs () {
 }
 
 async function main () {
-  await updateNodeStats(params.nodeStatsURL)
   await calculateLeaderLogs()
 }
 

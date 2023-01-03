@@ -48,9 +48,6 @@ make
 sudo make install
 ```
 
-### cardano-node
-
-The node does not need to run as a block producer as long as it has access to the pool's `vrf.skey`.
 
 ### Clone the repo and install dependencies
 
@@ -70,43 +67,26 @@ Example file available in `example.slotLeaderLogsConfig.json`.
 
 ```javscript
 {
-  "poolId":           "<YOUR_POOL_ID>",
   "poolIdBech32":     "<YOUR_POOL_BECH32_ID (pool1...)", // bech32 encoded pool ID
   "vrfSkey":          "vrf.skey", // path to pool's VRF signing key
-
   "genesisShelley":   "../files/genesis.json", // path to Shelley genesis file
-  "genesisByron":     "../files/byron-genesis.json", // path to Byron genesis file
-
   "libsodiumBinary":  "/usr/local/lib/libsodium.so", // path to Libsodium executable
-  "cardanoCLI":       "cardano-cli", // path to cardano-cli executable
-  "nodeStatsURL":     "http://127.0.0.1:12798/metrics", // location for node stats (from the node's `config.json`)
-
   "timeZone":         "Europe/London" // timezone to be used to display the block schedule in
 }
 ```
 
-## Retrieving the epoch nonce
-
-To manually retrieve the epoch nonce (required for block schedule calculation):
-
-```
-cardano-cli query protocol-state --mainnet | jq -r .csTickn.ticknStateEpochNonce.contents
-
-0022cfa563a5328c4fb5c8017121329e964c26ade5d167b1bd9b2ec967772b60
-```
-
 ## Running
 
-1. Through the provided `runLeaderLogs.sh`:
+1. Through the provided `runLeaderLogsCurrent.sh` or `runLeaderLogsNext.sh`:
    By default, this script will look for the `slotLeaderLogsConfig.json` in the same directory -> this can be edited inside the script to specify another location for the config file:
 
 ```bash
-# runLeaderLogs.sh
+# runLeaderLogsCurrent.sh
 SLOTLEADER_CONFIG="slotLeaderLogsConfig.json" # path to configuration file
 ```
 
 ```bash
-./runLeaderLogs.sh
+./runLeaderLogsCurrent.sh
 
 ...
 
@@ -124,7 +104,7 @@ assigned blocks with d == 0.00: xyz
 2. Manually, by running:
 
 ```bash
-node cardanoLeaderLogs.js path/to/slotLeaderLogsConfig.json epochNonceHash
+node cardanoLeaderLogs.js path/to/slotLeaderLogsConfig.json <previous | current | next>
 ```
 
 ## Thanks
