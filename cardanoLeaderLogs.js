@@ -14,7 +14,6 @@ if (process.argv.length < 4) {
 const params = JSON.parse(fs.readFileSync(process.argv[2]))
 
 if (
-  !params.hasOwnProperty('poolId') ||
   !params.hasOwnProperty('poolIdBech32') ||
   !params.hasOwnProperty('vrfSkey') ||
   !params.hasOwnProperty('genesisShelley') ||
