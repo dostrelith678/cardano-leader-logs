@@ -4,10 +4,6 @@ In a community effort, led by Andrew Westberg [BCSH], we implemented a way to re
 
 This is a `nodejs` + `python` implementation which was tested on Ubuntu 20.04.
 
-**Note: this method only works for current epoch block assignments. Calculating next epoch's assignments based on next epoch's nonce is not supported.**
-
-Japanese README: https://github.com/btbf/cardano-leader-logs (outdated)
-
 # Installation
 
 ## Ubuntu 20.04
